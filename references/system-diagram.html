@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>evolution-cat-writer · 系统结构图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAFAF8; --paper-rgb:250,250,248;
+    --ink:#0A0A0A; --ink-rgb:10,10,10;
+    --grey-0:#F2F2F0; --grey-1:#E8E8E4; --grey-2:#CFCFCB; --grey-3:#737373;
+    --accent:#002FA7; --accent-rgb:0,47,167; --accent-on:#FFFFFF;
+    --accent-light:rgba(0,47,167,.06); --accent-mid:rgba(0,47,167,.12);
+    --accent-strong:rgba(0,47,167,.18);
+    --kill:#CC3333; --kill-rgb:204,51,51; --kill-light:rgba(204,51,51,.06);
+    --warn:#B8860B; --warn-light:rgba(184,134,11,.07);
+    --green:#2E7D32; --green-light:rgba(46,125,50,.06);
+    --sans:"Inter","Helvetica Neue","Helvetica","Arial","Segoe UI",system-ui,-apple-system,sans-serif;
+    --sans-zh:"Noto Sans SC","PingFang SC","Microsoft YaHei UI","Microsoft YaHei","微软雅黑",sans-serif;
+    --mono:"JetBrains Mono","IBM Plex Mono","SF Mono","Cascadia Code","Consolas",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--paper);color:var(--ink);font-family:var(--sans),var(--sans-zh);-webkit-font-smoothing:antialiased}
+  body{max-width:1800px;margin:0 auto;padding:40px 48px 60px}
+
+  .hero{background:var(--accent);color:var(--accent-on);padding:52px 56px;margin-bottom:36px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end}
+  .hero .kicker{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:8px}
+  .hero h1{font-size:clamp(48px,5.5vw,76px);font-weight:200;letter-spacing:-.02em;line-height:1.02;color:var(--accent-on)}
+  .hero .deck{font-size:17px;font-weight:400;color:rgba(255,255,255,.65);margin-top:12px;max-width:650px;line-height:1.6}
+  .hero .kpi-strip{display:flex;gap:48px;align-self:end}
+  .hero .kpi-strip .kv{font-family:var(--mono);font-size:60px;font-weight:300;color:var(--accent-on);line-height:1;letter-spacing:-.03em}
+  .hero .kpi-strip .kl{font-size:13px;color:rgba(255,255,255,.5);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
+
+  .main-grid{display:grid;grid-template-columns:1fr 360px;gap:36px;margin-bottom:36px}
+
+  .panel{background:var(--grey-0);padding:24px;border-left:1px solid var(--accent)}
+  .panel.clean{background:var(--paper);border-left:none}
+  .panel-head{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:18px;padding-bottom:8px;border-bottom:1px solid var(--accent)}
+
+  .pipeline{position:relative}
+  .step{margin-bottom:0;position:relative}
+  .step-inner{display:grid;grid-template-columns:72px 1fr 130px;gap:18px;align-items:start;padding:12px 0}
+  .step:last-child .step-inner{padding-bottom:0}
+
+  .step-num{width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:22px;font-weight:500;color:var(--accent);border:1px solid var(--accent);background:var(--accent-light);flex-shrink:0}
+  .step-num.spawn{color:var(--accent-on);background:var(--accent);border-color:var(--accent)}
+  .step-num.kill{color:var(--kill);border-color:var(--kill);background:var(--kill-light)}
+  .step-num.opt{color:var(--grey-3);border-color:var(--grey-2);border-style:dashed;background:transparent}
+  .step-num.green{color:var(--green);border-color:var(--green);background:var(--green-light)}
+
+  .step-body h3{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:2px}
+  .step-body .role{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;margin-bottom:4px}
+  .step-body .desc{font-size:14px;color:var(--grey-3);line-height:1.5;font-weight:400}
+  .step-body .out{font-family:var(--mono);font-size:11px;color:var(--grey-2);margin-top:4px;font-weight:500}
+
+  .gate-break{background:var(--kill-light);border-left:1px solid var(--kill);padding:14px 18px;margin:6px 0 6px 90px}
+  .gate-break .gtag{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--kill);background:rgba(204,51,51,.1);padding:3px 10px;margin-bottom:6px;letter-spacing:.06em}
+  .gate-break .gtitle{font-size:14px;font-weight:700;color:var(--ink)}
+  .gate-break .gdetail{font-size:13px;color:var(--grey-3);margin-top:3px;line-height:1.5}
+  .gate-break .gitems{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+  .gate-break .gi{font-family:var(--mono);font-size:12px;color:var(--kill);font-weight:600}
+
+  .gate-break.eng{background:var(--accent-light);border-left-color:var(--accent)}
+  .gate-break.eng .gtag{color:var(--accent);background:var(--accent-mid)}
+  .gate-break.eng .gi{color:var(--accent)}
+
+  .gate-break.warn{background:var(--warn-light);border-left-color:var(--warn)}
+  .gate-break.warn .gtag{color:var(--warn);background:rgba(184,134,11,.12)}
+  .gate-break.warn .gi{color:var(--warn)}
+
+  .gate-break.green{background:var(--green-light);border-left-color:var(--green)}
+  .gate-break.green .gtag{color:var(--green);background:rgba(46,125,50,.1)}
+
+  .pause-marker{margin:4px 0 4px 90px;padding:8px 14px;border-left:1px solid var(--warn);background:var(--warn-light)}
+  .pause-marker .plabel{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--warn);letter-spacing:.06em}
+  .pause-marker .ptext{font-size:12px;color:var(--grey-3);margin-top:2px}
+
+  .side-stack{display:flex;flex-direction:column;gap:20px}
+
+  .tt{width:100%;border-collapse:collapse;font-size:12px}
+  .tt th{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent);text-align:left;padding:6px 8px;border-bottom:1px solid var(--accent);letter-spacing:.06em;text-transform:uppercase}
+  .tt td{padding:6px 8px;border-bottom:1px solid var(--grey-1);vertical-align:top;line-height:1.45}
+  .tt .rname{font-weight:700;color:var(--ink);white-space:nowrap}
+  .tt .rstep{font-family:var(--mono);font-size:11px;color:var(--accent)}
+  .tt .rrole{font-size:11px;color:var(--grey-3)}
+
+  .folder-tree{font-family:var(--mono);font-size:13px;line-height:2.1;color:var(--ink)}
+  .folder-tree .dir{color:var(--accent);font-weight:600}
+  .folder-tree .file{color:var(--grey-3)}
+  .folder-tree .comment{color:var(--grey-2);font-size:11px}
+  .folder-tree .row{display:flex;align-items:baseline;position:relative;padding-left:0}
+  .folder-tree .row .pre{color:var(--grey-2);white-space:pre;flex-shrink:0;user-select:none;margin-right:2px}
+  .folder-tree .lv1{padding-left:4px}
+  .folder-tree .lv2{padding-left:22px}
+  .folder-tree .lv3{padding-left:40px}
+
+  .fc-wrap{background:var(--grey-0);padding:28px 0;margin-top:0}
+  .fc-row{display:flex;align-items:stretch;gap:0;position:relative}
+  .fc-node{flex:1;min-width:0;position:relative;padding:0 10px;display:flex;flex-direction:column}
+  .fc-node .fc-box{background:var(--accent-light);border:1px solid var(--accent-mid);padding:14px 12px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);line-height:1.35;text-align:center;flex:1}
+  .fc-node .fc-box.gate{background:var(--accent);color:var(--accent-on);border-color:var(--accent)}
+  .fc-node .fc-box.kill{background:var(--kill);color:var(--accent-on);border-color:var(--kill)}
+  .fc-node .fc-box.pause{background:var(--warn-light);color:var(--warn);border:1px dashed var(--warn)}
+  .fc-node .fc-box.green{background:var(--green);color:var(--accent-on);border-color:var(--green)}
+  .fc-node .fc-sub{font-size:11px;color:var(--grey-3);margin-top:5px;line-height:1.45;text-align:center}
+  .fc-arrow-h{display:flex;align-items:center;justify-content:center;width:32px;flex-shrink:0;font-family:var(--mono);font-size:18px;color:var(--accent);font-weight:400;user-select:none}
+  .fc-wrap-arrow{display:flex;align-items:center;justify-content:flex-end;padding:0 10px;height:32px;font-family:var(--mono);font-size:18px;color:var(--accent);font-weight:400;user-select:none}
+  .fc-spacer{flex:1;min-width:0}
+
+  .cg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:13px}
+  .cg .cr{background:var(--kill-light);border-left:1px solid var(--kill);padding:8px 12px}
+  .cg .cr .cn{font-family:var(--mono);font-weight:700;color:var(--kill);font-size:12px}
+  .cg .cr .ct{font-size:12px;color:var(--grey-3);margin-top:2px}
+  .cg .cr.normal{background:var(--accent-light);border-left-color:var(--accent)}
+  .cg .cr.normal .cn{color:var(--accent)}
+  .cg .cr.warn{background:var(--warn-light);border-left-color:var(--warn)}
+  .cg .cr.warn .cn{color:var(--warn)}
+  .cg .cr.green{background:var(--green-light);border-left-color:var(--green)}
+  .cg .cr.green .cn{color:var(--green)}
+
+  .tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 10px;font-weight:600;letter-spacing:.04em}
+  .tag.uni{background:var(--green-light);color:var(--green)}
+  .tag.personal{background:var(--accent-light);color:var(--accent)}
+
+  .stat-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-top:1px solid var(--accent);border-bottom:1px solid var(--grey-1);margin-top:40px}
+  .stat-bar .sc{padding:20px 22px;border-right:1px solid var(--grey-1);background:var(--grey-0)}
+  .stat-bar .sc:last-child{border-right:none}
+  .stat-bar .sc .sn{font-family:var(--mono);font-size:clamp(36px,3.5vw,52px);font-weight:300;color:var(--accent);line-height:1}
+  .stat-bar .sc .sl{font-size:13px;color:var(--grey-3);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+  .stat-bar .sc .sdetail{font-size:12px;color:var(--grey-2);margin-top:2px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div>
+    <div class="kicker">Skill 系统结构图</div>
+    <h1>evolution-cat-writer</h1>
+    <p class="deck">进化猫公众号长文写作风格技能 — 从框架提取到个人风格注入。通用写作规则（⚙️）+ 个人声音（👤）= 完整写作人格。HKIR 选题质检（启发性硬门槛）· 杀稿门禁（写前硬拦截）· 5 种文章原型 · 4 层质检体系 · 7 项通用写作技法 · 骨架/血肉双层生长架构。</p>
+  </div>
+  <div class="kpi-strip">
+    <div><div class="kv">5</div><div class="kl">文章原型</div></div>
+    <div><div class="kv">HKIR</div><div class="kl">选题质检</div></div>
+    <div><div class="kv">4</div><div class="kl">质检层级</div></div>
+    <div><div class="kv">7</div><div class="kl">写作技法</div></div>
+    <div><div class="kv">2</div><div class="kl">层级生长</div></div>
+  </div>
+</header>
+
+<div class="main-grid">
+
+  <div class="panel clean">
+    <div class="panel-head">写作执行管线 · 5 步循环 · 含写前杀稿门禁</div>
+    <div class="pipeline">
+
+      <div class="step"><div class="step-inner">
+        <div class="step-num green">0</div>
+        <div class="step-body"><h3>素材理解 + HKIR 质检</h3><div class="role">主 session · SKILL.md §第一步</div><div class="desc">吃透用户提供的素材（brief / 链接 / PDF / 语音转文字 / 散乱想法）。跑 HKIR 质检：Happy（有趣？有悬念？）· Knowledge（有信息量？）· Inspiration（有启发性？**I 是硬门槛 — 不通过直接杀**）· Resonance（戳中情绪？）。S 级四项兼备，及格线 I 必过 + H/K/R 至少一项。信息不够主动问用户。</div><div class="out">→ 选题判定（继续 / 沟通调整 / 放弃）</div></div>
+        <div></div>
+      </div></div>
+
+      <div class="gate-break green">
+        <div class="gtag">门禁 · Step 0</div>
+        <div class="gtitle">I（启发性）必过 → 继续；I 不通过 → 🔴 杀稿；I 过但 H/K/R 全不占 → 杀稿</div>
+        <div class="gdetail">没有启发性的选题不进入下一步。素材不够 → 主动问用户补充。</div>
+      </div>
+
+      <div class="step"><div class="step-inner">
+        <div class="step-num kill">杀</div>
+        <div class="step-body"><h3>杀稿门禁 · 写前硬拦截</h3><div class="role">主 session · SKILL.md §杀稿门禁</div><div class="desc">HKIR 通过后、动笔前，跑三道杀稿问。①认知税：读者要理解几个陌生概念？≥3 → 🔴 杀。②洞察值：最终洞察是"操原来可以这样"还是"嗯我知道"？后者 → 🔴 杀。③分享货币：读者转给朋友能靠转发完成自我表达吗？转不出手 → 🔴 杀。0 红灯过，1 红灯过但补强，2+ 红灯杀稿。杀稿后素材保留，选题回库标记"碎片待拼"。</div><div class="out">→ 过/杀 · 杀稿写 .abandoned</div></div>
+        <div></div>
+      </div></div>
+
+      <div class="gate-break kill">
+        <div class="gtag">杀稿门禁 · 写前拦截</div>
+        <div class="gtitle">0-1 红灯 → 过（1 红灯写作时补强）；2+ 红灯 → 🔴 杀</div>
+        <div class="gdetail">认知税过重 / 无洞察 / 转不出手 → 杀稿不留。部分亮点撑不起整篇 → 标记"碎片待拼"。</div>
+      </div>
+
+      <div class="step"><div class="step-inner">
+        <div class="step-num">1</div>
+        <div class="step-body"><h3>AI 角色边界确认</h3><div class="role">主 session · SKILL.md §第二步</div><div class="desc">明确此次写作中 AI 负责什么、人负责什么。AI 擅长：找证据佐证、找类比比喻、按确定角度扩写、补充背景知识、梳理逻辑结构。人必须做：第一手观察和真实经历、核心创意角度、情绪的真实表达（体感记忆而非知识性描述）。</div><div class="out">→ 协作边界清晰</div></div>
+        <div></div>
+      </div></div>
+
+      <div class="step"><div class="step-inner">
+        <div class="step-num spawn">2</div>
+        <div class="step-body"><h3>写作执行</h3><div class="role">主 session · SKILL.md §第三步</div><div class="desc">三步串联：①判断文章原型（调查实验 / 产品体验 / 现象解读 / 工具分享 / 方法论分享）→ ②应用对应原型的写法重心 → ③按结构模板写作（开头→背景→核心内容→收尾→署名）。全程应用风格框架中的⚙️通用规则和👤个人偏好。</div><div class="out">→ draft-v1.md</div></div>
+        <div></div>
+      </div></div>
+
+      <div class="gate-break eng">
+        <div class="gtag">门禁 · Step 2</div>
+        <div class="gtitle">原型判定正确 + 结构模板完整 + 风格框架规则已应用</div>
+        <div class="gdetail">结构不完整 → 退回到对应板块补写。原型选错 → 重新判断。</div>
+      </div>
+
+      <div class="step"><div class="step-inner">
+        <div class="step-num spawn">3</div>
+        <div class="step-body"><h3>四层质检</h3><div class="role">主 session · SKILL.md §质检体系</div><div class="desc">L1 硬性规则检查（禁用词/标点/结构套话/空泛工具名 — 扫描零命中）→ L2 风格一致性（开头/节奏/语言/结尾 — 全部通过）→ L3 内容质量（观点支撑/知识输出/类型专项/扣主线 — 全部通过）→ L4 活人感终审（温度/独特性/姿态/心流 — 像真人写的）。</div><div class="out">→ 质检报告 + draft-v2.md</div></div>
+        <div></div>
+      </div></div>
+
+      <div class="gate-break warn">
+        <div class="gtag">退回门禁 · Step 3</div>
+        <div class="gtitle">L1 零命中 → 通过；L2-L4 任一 FAIL → 返工对应段落重写</div>
+        <div class="gdetail">L4 活人感 FAIL → 把"AI 味重"的段落找出来，用更口语、更私人、更不完美的���式重写。</div>
+      </div>
+
+      <div class="step"><div class="step-inner">
+        <div class="step-num opt">4</div>
+        <div class="step-body"><h3>可选 · 复盘生长</h3><div class="role">主 session + 用户</div><div class="desc">通读终稿 → 诊断最弱 3 个点 → 提取新的风格信号 → 更新血肉层（flesh/voice-signals.md）。复盘只写入 flesh/，不改 skeleton/。</div><div class="out">→ flesh/ 信号更新</div></div>
+        <div></div>
+      </div></div>
+
+    </div>
+  </div>
+
+  <div class="side-stack">
+
+    <div class="panel">
+      <div class="panel-head">Skill 目录结构</div>
+      <div class="folder-tree">
+        <div class="row lv1"><span class="dir">evolution-cat-writer/</span></div>
+        <div class="row lv2"><span class="pre">├── </span><span class="file">SKILL.md</span>  <span class="comment">技能主文件 · 完整写作人格定义</span></div>
+        <div class="row lv2"><span class="pre">├── </span><span class="file">system-diagram.html</span>  <span class="comment">本文件 · 结构图</span></div>
+        <div class="row lv2"><span class="pre">├── </span><span class="file">render.py</span>  <span class="comment">Markdown → HTML 渲染脚本</span></div>
+        <div class="row lv2"><span class="pre">├── </span><span class="dir">references/</span></div>
+        <div class="row lv3"><span class="pre">│   ├── </span><span class="dir">skeleton/</span>  <span class="comment">骨架层 · 通用写作规则 · 不随人变</span></div>
+        <div class="row lv3"><span class="pre">│   │   ├── </span><span class="file">kill-gate.md</span>  <span class="comment">杀稿门禁 · 写前三道硬拦截</span></div>
+        <div class="row lv3"><span class="pre">│   │   ├── </span><span class="file">hkir-gate.md</span>  <span class="comment">HKIR 选题质检（I=启发性硬门槛）</span></div>
+        <div class="row lv3"><span class="pre">│   │   ├── </span><span class="file">article-archetypes.md</span>  <span class="comment">5 种文章原型定义</span></div>
+        <div class="row lv3"><span class="pre">│   │   ├── </span><span class="file">ai-boundary.md</span>  <span class="comment">AI-人协作边界</span></div>
+        <div class="row lv3"><span class="pre">│   │   ├── </span><span class="file">writing-techniques.md</span>  <span class="comment">7 项通用写作技法</span></div>
+        <div class="row lv3"><span class="pre">│   │   ├── </span><span class="file">quality-layers.md</span>  <span class="comment">L1-L4 质检框架</span></div>
+        <div class="row lv3"><span class="pre">│   │   └── </span><span class="file">absolute-bans.md</span>  <span class="comment">通用 AI 味禁区</span></div>
+        <div class="row lv3"><span class="pre">│   ├── </span><span class="dir">flesh/</span>  <span class="comment">血肉层 · 进化猫个人风格 · retro 生长</span></div>
+        <div class="row lv3"><span class="pre">│   │   ├── </span><span class="file">voice-signals.md</span>  <span class="comment">口头禅 · 情绪表达 · 标点偏好</span></div>
+        <div class="row lv3"><span class="pre">│   │   ├── </span><span class="file">hard-preferences.md</span>  <span class="comment">≤5 偏好 + ≤5 角色槽</span></div>
+        <div class="row lv3"><span class="pre">│   │   ├── </span><span class="file">avoid-list.md</span>  <span class="comment">进化猫个人禁区</span></div>
+        <div class="row lv3"><span class="pre">│   │   └── </span><span class="file">topic-taxonomy.md</span>  <span class="comment">内容分类库</span></div>
+        <div class="row lv3"><span class="pre">│   └── </span><span class="file">style_examples.md</span>  <span class="comment">风格示例库（待建立）</span></div>
+        <div style="margin-top:6px;font-size:11px;color:var(--grey-2)">skeleton/ 开源通用 · 不随人变<br>flesh/ 从空开始长 · 跑 10 篇后生长出个人风格指纹</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">5 种文章原型</div>
+      <table class="tt">
+        <thead><tr><th>原型</th><th>核心句式</th><th>写法重心</th></tr></thead>
+        <tbody>
+          <tr><td class="rname">调查实验型</td><td class="rstep">"我替你去做了"</td><td class="rrole">过程叙事 + 层层递进的发现</td></tr>
+          <tr><td class="rname">产品体验型</td><td class="rstep">"跟我一起玩"</td><td class="rrole">场景演示 + 真实感受 + 产品对比</td></tr>
+          <tr><td class="rname">现象解读型</td><td class="rstep">"你注意到了吗？"</td><td class="rrole">观察→好奇→研究→升维</td></tr>
+          <tr><td class="rname">工具分享型</td><td class="rstep">"我发现了好东西"</td><td class="rrole">个人故事铺垫→工具展示→效果</td></tr>
+          <tr><td class="rname">方法论分享型</td><td class="rstep">"压箱底的东西"</td><td class="rrole">可执行行动 + 坦诚学习曲线</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--grey-3);margin-top:8px">第一篇文章「截图落盘中转站」= 工具分享型原型。痛点→追根因→找到工具→效果→反思。</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">风格框架 · 规则分类</div>
+      <div class="tag-row">
+        <span class="tag uni">⚙️ 通用规则</span>
+        <span class="tag personal">👤 进化猫个人</span>
+      </div>
+      <table class="tt">
+        <thead><tr><th>维度</th><th>⚙️ 通用（不随人变）</th><th>👤 进化猫（从文章提取）</th></tr></thead>
+        <tbody>
+          <tr><td class="rname">语言</td><td class="rrole">讲人话、真诚不骗、拥抱不完美</td><td class="rrole">直接不废话、三段式情绪推进、品牌比喻、自嘲式身份</td></tr>
+          <tr><td class="rname">节奏</td><td class="rrole">长短句交替、一句成段、波动推进</td><td class="rrole">板块分隔用 -- 、不写小标题</td></tr>
+          <tr><td class="rname">开头</td><td class="rrole">具体事件切入，禁止宏大叙事</td><td class="rrole">痛点直击+动作描述、叙事启动</td></tr>
+          <tr><td class="rname">知识输出</td><td class="rrole">聊着聊着顺手掏出来</td><td class="rrole">"我查了一下，答案很离谱"式好奇心</td></tr>
+          <tr><td class="rname">结尾</td><td class="rrole">自然收束，不啰嗦</td><td class="rrole">反思段→金句→固定署名✨</td></tr>
+          <tr><td class="rname">标点</td><td class="rrole">服务于口语节奏</td><td class="rrole">冒号可用 · →流程衔接 · ~语气延长</td></tr>
+          <tr><td class="rname">幽默</td><td class="rrole">自然流露，不刻意搞笑</td><td class="rrole">品牌反差 · 直白吐槽 · 自嘲</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--grey-3);margin-top:8px">👤 列的内容来自「截图落盘中转站」提取。待用户确认后有更多文章可进一步生长。</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">7 项通用写作技法</div>
+      <table class="tt">
+        <thead><tr><th>技法</th><th>一句话说明</th></tr></thead>
+        <tbody>
+          <tr><td class="rname">人物画像法</td><td class="rrole">从数据点出发 → 3-5 句内让一个人物立体</td></tr>
+          <tr><td class="rname">层层剥开</td><td class="rrole">现象→表面解释→更深追问→核心洞察</td></tr>
+          <tr><td class="rname">反向论证</td><td class="rrole">先满足期待再打破，"我也曾经这样想"</td></tr>
+          <tr><td class="rname">疑问句刹车</td><td class="rrole">用疑问句让读者停一秒，准备接收新信息</td></tr>
+          <tr><td class="rname">逐一展示法</td><td class="rrole">升番逻辑 — 最弱放前面，最炸留最后</td></tr>
+          <tr><td class="rname">回环呼应</td><td class="rrole">契诃夫之枪 — 前面埋的钩子结尾收</td></tr>
+          <tr><td class="rname">谦逊铺垫</td><td class="rrole">给出建议前先降低读者防御心</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">L1 绝对禁区 · AI 味禁用词</div>
+      <div class="cg">
+        <div class="cr normal"><div class="cn">1 禁用："说白了"</div></div>
+        <div class="cr normal"><div class="cn">2 禁用："本质上"</div></div>
+        <div class="cr normal"><div class="cn">3 禁用："换句话说" / "不可否认"</div></div>
+        <div class="cr normal"><div class="cn">4 禁用："首先...其次...最后"</div></div>
+        <div class="cr normal"><div class="cn">5 禁用："值得注意的是" / "不难发现"</div></div>
+        <div class="cr normal"><div class="cn">6 禁用："让我们来看看..."</div></div>
+        <div class="cr normal"><div class="cn">7 禁用："在当今AI时代" / "随着技术发展"</div></div>
+        <div class="cr normal"><div class="cn">8 禁用：空泛工具名 → 必须具体名称</div></div>
+        <div class="cr normal"><div class="cn">9 禁用：假设性例子 "比如有一次..."</div></div>
+        <div class="cr normal"><div class="cn">10 禁用：连续 bullet point ≥3 个</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">骨架/血肉 双层生长架构</div>
+      <div style="font-size:14px;line-height:1.6">
+        <div style="margin-bottom:12px"><span style="font-family:var(--mono);font-weight:700;color:var(--accent);font-size:13px">skeleton/ 骨架层（⚙️ 通用规则）</span><br><span style="color:var(--grey-3)">写作流程 · HKIR 质检（I=启发性硬门槛）· 杀稿门禁 · 5 原型定义 · AI 协作边界 · 7 技法 · L1-L4 质检框架 · AI 味禁区。不随作者变化。开源后别人可直接用。</span></div>
+        <div style="margin-bottom:12px"><span style="font-family:var(--mono);font-weight:700;color:var(--accent);font-size:13px">flesh/ 血肉层（👤 进化猫个人风格）</span><br><span style="color:var(--grey-3)">口头禅 · 情绪表达 · 标点偏好 · 个人禁区 · 例文指纹。≤20 条信号 + ≤5 硬偏好 + ≤5 角色槽。跑 10 篇后生长出完整风格指纹。retro 回流只写入此层。</span></div>
+        <div style="background:var(--warn-light);padding:8px 12px;border:1px dashed var(--warn)">
+          <span style="font-size:12px;color:var(--grey-3)">⚠️ 当前状态：flesh/ 数据仅来自 1 篇文章。需要用户确认填充的 [待填充] 项后才能建立完整基线。</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="panel clean" style="margin-bottom:36px">
+  <div class="panel-head">写作执行链 · 5 步流程 + 4 道门禁（含写前杀稿）</div>
+  <div style="font-size:13px;color:var(--grey-3);margin-bottom:18px">Step 0-1 由主 session 完成。杀稿门禁是写前硬拦截。Step 2-3 是核心写作+质检循环。Step 4 为可选复盘生长。每步输出文件 = 下一步前置依赖。</div>
+
+  <div class="fc-row">
+    <div class="fc-node"><div class="fc-box green">Step 0<br>HKIR 质检</div><div class="fc-sub">4项质检<br>I 启发性硬门槛</div></div>
+    <div class="fc-arrow-h">→</div>
+    <div class="fc-node"><div class="fc-box kill">杀稿门禁<br>写前拦截</div><div class="fc-sub" style="color:rgba(255,255,255,.65)">认知税·洞察值<br>分享货币</div></div>
+    <div class="fc-arrow-h">→</div>
+    <div class="fc-node"><div class="fc-box gate">Step 1<br>AI 边界确认</div><div class="fc-sub" style="color:rgba(255,255,255,.65)">AI做什么<br>人做什么</div></div>
+    <div class="fc-arrow-h">→</div>
+    <div class="fc-node"><div class="fc-box gate">Step 2<br>写作执行</div><div class="fc-sub" style="color:rgba(255,255,255,.65)">判定原型<br>应用风格框架</div></div>
+    <div class="fc-arrow-h">→</div>
+    <div class="fc-node"><div class="fc-box gate">Step 3<br>四层质检</div><div class="fc-sub" style="color:rgba(255,255,255,.65)">L1→L2→L3→L4<br>FAIL→返工</div></div>
+    <div class="fc-arrow-h">→</div>
+    <div class="fc-node"><div class="fc-box">Step 4<br>复盘生长</div><div class="fc-sub">诊断最弱3点<br>→ flesh/</div></div>
+  </div>
+  <div class="fc-wrap-arrow">↓</div>
+  <div class="fc-row">
+    <div class="fc-node"><div class="fc-box kill">L1 硬性规则</div><div class="fc-sub" style="color:rgba(255,255,255,.65)">禁用词 · 标点<br>结构套话 · 空泛名</div></div>
+    <div class="fc-arrow-h">→</div>
+    <div class="fc-node"><div class="fc-box kill">L2 风格一致</div><div class="fc-sub" style="color:rgba(255,255,255,.65)">开头 · 节奏<br>语言 · 结尾</div></div>
+    <div class="fc-arrow-h">→</div>
+    <div class="fc-node"><div class="fc-box kill">L3 内容质量</div><div class="fc-sub" style="color:rgba(255,255,255,.65)">观点支撑 · 知识输出<br>类型专项 · 扣主线</div></div>
+    <div class="fc-arrow-h">→</div>
+    <div class="fc-node"><div class="fc-box kill">L4 活人感</div><div class="fc-sub" style="color:rgba(255,255,255,.65)">温度 · 独特性<br>姿态 · 心流</div></div>
+  </div>
+</div>
+
+<div class="stat-bar">
+  <div class="sc">
+    <div class="sn">HKIR</div>
+    <div class="sl">选题质检</div>
+    <div class="sdetail">Happy · Knowledge · Inspiration（硬门槛）· Resonance</div>
+  </div>
+  <div class="sc">
+    <div class="sn">3</div>
+    <div class="sl">杀稿三问</div>
+    <div class="sdetail">认知税 · 洞察值 · 分享货币 — 写前硬拦截</div>
+  </div>
+  <div class="sc">
+    <div class="sn">7</div>
+    <div class="sl">通用写作技法</div>
+    <div class="sdetail">画像 · 剥开 · 反转 · 刹车 · 逐一 · 回环 · 谦逊</div>
+  </div>
+  <div class="sc">
+    <div class="sn">10</div>
+    <div class="sl">L1 AI 禁用词</div>
+    <div class="sdetail">说白了 · 本质上 · 首先其次 · 值得注意的是…</div>
+  </div>
+  <div class="sc">
+    <div class="sn">2</div>
+    <div class="sl">层级生长</div>
+    <div class="sdetail">skeleton/ 骨架不改 · flesh/ 血肉 retro 生长</div>
+  </div>
+</div>
+
+</body>
+</html>
